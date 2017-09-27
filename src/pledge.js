@@ -2,7 +2,7 @@
 /*----------------------------------------------------------------
 Promises Workshop: build the pledge.js ES6-style promise library
 ----------------------------------------------------------------*/
-// YOUR CODE HERE:
+
 function $Promise(executor) {
   this._state = 'pending';
   this._value;
@@ -18,25 +18,27 @@ function $Promise(executor) {
   if (typeof executor !== 'function') throw TypeError('executor is not a function');
 }
 
+$Promise.prototype.__dispatchHandlers = function() {
+  while (this._handlerGroups.length) {
+    this._callHandlers();
+  }
+}
+
 // TODO Convert to arrow function to see how 'this' is affected.
 $Promise.prototype._internalResolve = function(someData) {
   if (this._state != 'fulfilled' && this._state != 'rejected') {
     this._value = someData;
     this._state = 'fulfilled';
   }
-  while (this._handlerGroups.length) {
-    this._callHandlers();
-  }
+  this.__dispatchHandlers();
 }
 
 $Promise.prototype._internalReject = function(reason) {
   if (this._state != 'rejected' && this._state != 'fulfilled') {
-    this._state = 'rejected';
     this._value = reason;
+    this._state = 'rejected';
   }
-  while (this._handlerGroups.length) {
-    this._callHandlers();
-  }
+  this.__dispatchHandlers();
 }
 
 $Promise.prototype.then = function(successCb, errorCb) {
@@ -54,13 +56,12 @@ $Promise.prototype._callHandlers = function() {
   if (this._state === 'fulfilled' && this._handlerGroups[0].successCb) {
     this._handlerGroups.shift().successCb(this._value);
   } else if (this._state === 'rejected' && this._handlerGroups[0].errorCb) {
-    console.log(this._value);
     this._handlerGroups.shift().errorCb(this._value);
   }
 }
 
 $Promise.prototype.catch = function(callback) {
-  return this.then(null, callback); 
+  return this.then(null, callback);
 }
 
 
