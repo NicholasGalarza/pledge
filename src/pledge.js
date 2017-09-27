@@ -46,13 +46,15 @@ $Promise.prototype.then = function(successCb, errorCb) {
 
   this._callHandlers();
 }
+{successCb: logOpps, errorCb: false}
 
 $Promise.prototype._callHandlers = function() {
   if(this._state === 'fulfilled') {
     this._handlerGroups.shift().successCb(this._value);
+  } else if (this._state === 'rejected') {
+    
   }
 }
-
 
 
 /*-------------------------------------------------------
