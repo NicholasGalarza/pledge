@@ -6,15 +6,15 @@ Promises Workshop: build the pledge.js ES6-style promise library
 function $Promise(executor) {
   this._state = 'pending';
   this._value;
-  this._handlerGroups = []; 
+  this._handlerGroups = [];
   const internalResolve = this._internalResolve.bind(this);
-  const internalReject = this._internalReject.bind(this); 
+  const internalReject = this._internalReject.bind(this);
 
   executor(function(data) {
-    internalResolve(data); 
+    internalResolve(data);
   }, function(reason) {
-    internalReject(reason); 
-  }); 
+    internalReject(reason);
+  });
   if (typeof executor !== 'function') throw TypeError('executor is not a function');
 }
 
@@ -24,19 +24,33 @@ $Promise.prototype._internalResolve = function(someData) {
     this._value = someData;
     this._state = 'fulfilled';
   }
+  while (this._handlerGroups.length) {
+    this._callHandlers();
+  }
 }
 
 $Promise.prototype._internalReject = function(reason) {
-  if(this._state != 'rejected' && this._state != 'fulfilled') {
-    this._state = 'rejected'; 
-    this._value = reason; 
+  if (this._state != 'rejected' && this._state != 'fulfilled') {
+    this._state = 'rejected';
+    this._value = reason;
   }
 }
 
 $Promise.prototype.then = function(successCb, errorCb) {
-  if(typeof successCb !== 'function') successCb = false; 
-  if(typeof errorCb !== 'function') errorCb = false; 
-  this._handlerGroups.push({successCb: successCb, errorCb: errorCb})
+  if (typeof successCb !== 'function') successCb = false;
+  if (typeof errorCb !== 'function') errorCb = false;
+  this._handlerGroups.push({
+    successCb: successCb,
+    errorCb: errorCb
+  });
+
+  this._callHandlers();
+}
+
+$Promise.prototype._callHandlers = function() {
+  if(this._state === 'fulfilled') {
+    this._handlerGroups.shift().successCb(this._value);
+  }
 }
 
 
